@@ -1,163 +1,135 @@
 @extends('layout')
 @section('title', 'Edit Product')
 @section('content')
-    <div class="container">
-        <h1>Edit Product</h1>
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-4">Edit Product</h1>
         <form method="POST" action="{{ route('product.update', $data->id) }}" enctype="multipart/form-data">
             @csrf
-            @method('PATCH') <!-- Method override for PATCH request -->
-            <div class="mb-3">
-                <label for="name" class="form-label">Name</label>
-                <input type="text" class="form-control" id="name" name="name" value="{{ $data->name }}" required>
+            @method('PATCH')
+            <div class="mb-4">
+                <label for="name" class="block mb-1">Name</label>
+                <input type="text" class="border border-gray-300 px-4 py-2 w-full" id="name" name="name"
+                    value="{{ $data->name }}" required>
             </div>
-            <div class="mb-3">
-                <label for="slug" class="form-label">Slug</label>
-                <input type="text" class="form-control" id="slug" name="slug" required
-                    value="{{ $data->slug }}">
+            <div class="mb-4">
+                <label for="slug" class="block mb-1">Slug</label>
+                <input type="text" class="border border-gray-300 px-4 py-2 w-full" id="slug" name="slug"
+                    value="{{ $data->slug }}" required>
             </div>
-            <div class="mb-3">
-                <label for="price" class="form-label">Price</label>
-                <input type="number" class="form-control" id="price" name="price" required
-                    value="{{ $data->price }}">
+            <div class="mb-4">
+                <label for="price" class="block mb-1">Price</label>
+                <input type="number" class="border border-gray-300 px-4 py-2 w-full" id="price" name="price"
+                    value="{{ $data->price }}" required>
             </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3" required>{{ $data->description }}</textarea>
+            <div class="mb-4">
+                <label for="description" class="block mb-1">Description</label>
+                <textarea class="border border-gray-300 px-4 py-2 w-full" id="description" name="description" rows="3" required>{{ $data->description }}</textarea>
             </div>
-            <div class="mb-3">
-                <label for="photos" class="form-label">Photos</label>
-                <input type="file" class="form-control" id="photos" name="photos[]" multiple>
+            <div class="mb-4">
+                <label for="photos" class="block mb-1">Photos</label>
+                <input type="file" class="border border-gray-300 px-4 py-2 w-full" id="photos" name="photos[]"
+                    multiple required>
             </div>
-
-            <div id="previewContainer" class="row">
+            <div id="previewContainer" class="flex flex-wrap mb-4">
                 <!-- Image preview will be appended here -->
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" id="submitbtn" disabled
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
         </form>
+        <a href="{{ route('product.test') }}">test copy</a>
+        {{-- <p>{{ Storage::disk('public')->url($images) }}</p> --}}
+        <p>{{ $data }}</p>
+
+        {{-- <p>{{ $images }}</p> --}}
     </div>
-
+    <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+    <script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
     <script>
-        var photos = @json($data->images); // Assuming there are existing images
-        console.log(photos);
-        var inputElement = document.getElementById('photos');
-        var previewContainer = document.getElementById('previewContainer');
-        var allPhotos = [];
-        var filesToUpload = [];
+        let submitbtn = document.getElementById('submitbtn');
+        FilePond.registerPlugin(FilePondPluginImagePreview);
+        FilePond.registerPlugin(FilePondPluginFileValidateType);
+        FilePond.registerPlugin(FilePondPluginFileValidateSize);
+        const inputElement = document.getElementById("photos");
 
-        // Function to convert data URL to File object
-        function dataURLtoFile(dataUrl, filename) {
-            var arr = dataUrl.split(',');
-            var mime = arr[0].match(/:(.*?);/)[1];
-            var bstr = atob(arr[1]);
-            var n = bstr.length;
-            var u8arr = new Uint8Array(n);
-            while (n--) {
-                u8arr[n] = bstr.charCodeAt(n);
-            }
-            return new File([u8arr], filename, {
-                type: mime
-            });
-        }
+        const pond = FilePond.create(inputElement, {
+            acceptedFileTypes: ['image/png', 'image/jpeg', 'image/jpg'],
+            allowImagePreview: true,
+            maxFileSize: '2MB',
+            allowMultiple: true,
+            // files: [{
+            //         source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
+            //         options: {
+            //             type: 'local',
+            //         },
+            //     },
+            //     {
+            //         source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
+            //         options: {
+            //             type: 'local',
+            //         },
+            //     }
+            // ],
+            load: (source, load, error, progress, abort, headers) => {
+                const myRequest = new Request(source);
+                console.log(myRequest);
+                fetch(myRequest).then((res) => {
+                    return res.blob();
+                }).then(load);
+            },
+        });
 
-        // Function to add images to the file input
-        function addImagesToInput(files) {
-            // Populate the input element with the files
-            var fileList = new DataTransfer();
-            files.forEach(function(file) {
-                fileList.items.add(file);
-            });
-            inputElement.files = fileList.files;
-        }
-
-        photos.forEach(function(photo) {
-            const reader = new FileReader();
-
-            // Menambahkan pratinjau gambar dari database
-            const img = document.createElement('img');
-            img.src = '{{ asset('storage/images/') }}/' + photo.image;
-            imageUrl = '{{ asset('storage/images/') }}/' + photo.image;
-            allPhotos.push(imageUrl);
-            img.className = 'img-thumbnail col-md-3 mx-2 my-2';
-            previewContainer.appendChild(img);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'btn btn-danger mx-2 my-2';
-            removeBtn.innerText = 'Remove';
-            removeBtn.addEventListener('click', function() {
-                var index = allPhotos.indexOf(imageUrl);
-                if (index !== -1) {
-                    allPhotos.splice(index, 1);
-                    filesToUpload.splice(index, 1); // Remove corresponding file from filesToUpload array
+        FilePond.setOptions({
+            required: true,
+            onprocessfile: (error, file) => {
+                if (!error) {
+                    submitbtn.removeAttribute("disabled");
+                    // Tambahan untuk update file di server (contoh)
+                    const formData = new FormData();
+                    formData.append('file', file.file);
+                    // Implementasikan upload ke server Anda
+                    fetch('{{ route('product.update', $data->id) }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                            },
+                            body: formData,
+                        })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            // Handle response (misalnya update status file)
+                        });
                 }
-                previewContainer.removeChild(img);
-                previewContainer.removeChild(removeBtn);
-            });
-            previewContainer.appendChild(removeBtn);
-        });
-
-        // Check if all files are fetched
-        var loadedImages = 0;
-
-        function checkAllFilesLoaded() {
-            loadedImages++;
-            if (loadedImages === allPhotos.length) {
-                addImagesToInput(filesToUpload);
-            }
-        }
-
-        // Fetch and process each image
-        allPhotos.forEach(function(imageURL) {
-            fetch(imageURL)
-                .then(response => response.blob())
-                .then(blob => {
-                    // Convert the blob to a data URL
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        var dataUrl = event.target.result;
-                        // Convert data URL to a File object
-                        var file = dataURLtoFile(dataUrl, 'image product');
-                        // Add the file to the array
-                        filesToUpload.push(file);
-                        checkAllFilesLoaded();
-                    };
-                    reader.readAsDataURL(blob);
-                })
-                .catch(error => console.error('Error fetching image:', error));
-        });
-
-        // Event listener for new file uploads
-        inputElement.addEventListener('change', function(event) {
-            const files = event.target.files;
-            for (const file of files) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'img-thumbnail col-md-3 mx-2 my-2';
-                    previewContainer.appendChild(img);
-
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'btn btn-danger mx-2 my-2';
-                    removeBtn.innerText = 'Remove';
-                    removeBtn.addEventListener('click', function() {
-                        previewContainer.removeChild(img);
-                        previewContainer.removeChild(removeBtn);
-                        // Remove corresponding file from filesToUpload array
-                        var index = filesToUpload.indexOf(file);
-                        if (index !== -1) {
-                            filesToUpload.splice(index, 1);
-                        }
-                    });
-                    previewContainer.appendChild(removeBtn);
-
-                    // Add the file to the array
-                    filesToUpload.push(file);
-                    addImagesToInput(filesToUpload);
-                };
-                reader.readAsDataURL(file);
-            }
+            },
+            server: {
+                process: {
+                    url: '{{ route('upload.temporary') }}',
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    }
+                },
+                revert: {
+                    url: '{{ route('delete.temporary') }}',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    }
+                },
+            },
+            files: [{
+                    source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
+                    options: {
+                        type: 'local',
+                    },
+                },
+                {
+                    source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
+                    options: {
+                        type: 'local',
+                    },
+                }
+            ],
         });
     </script>
 @endsection

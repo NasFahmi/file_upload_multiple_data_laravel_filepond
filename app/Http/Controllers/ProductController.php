@@ -92,10 +92,10 @@ class ProductController extends Controller
                     // dd($fileNameProductImage); //GdomcXRDdftRq30MjJPz.jpeg
                     // copy file image from storage\app\public\images\tmp\image-660a77aaf10368.27307606\WhatsApp Image 2024-03-18 at 9.29.38 PM.jpeg to storage\app\public\images\GdomcXRDdftRq30MjJPz.jpeg
                     $sourcesPath = 'public/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
-                    $destinationPath = 'public/images/'.$fileNameProductImage;
+                    $destinationPath = 'public/images/' . $fileNameProductImage;
                     // dd($sourcesPath);
                     // dd($destinationPath);
-                    Storage::copy($sourcesPath,$destinationPath);
+                    Storage::copy($sourcesPath, $destinationPath);
                     Image::create([
                         'path' => 'storage/images/' . $fileNameProductImage,
                         'product_id' => $productId,
@@ -129,9 +129,18 @@ class ProductController extends Controller
     {
         // Mengambil data produk yang akan diedit
         $data = Product::findOrFail($product->id);
+        $images = Image::where('product_id', $product->id)->get()->map(function ($image) {
+            return [
+                'source' => $image->path,
+                'options' => [
+                    'type' => 'local'
+                ]
+            ];
+        })->toArray();
 
+        // dd($images);
         // Mengirimkan data produk ke view untuk diedit
-        return view('pages.edit', compact('data'));
+        return view('pages.edit', compact('data','images'));
     }
 
     /**
@@ -158,7 +167,7 @@ class ProductController extends Controller
     }
     public function test()
     {
-        Storage::copy('public/test.txt','public/images/bukantest.txt');
+        Storage::copy('public/test.txt', 'public/images/bukantest.txt');
         dd('succes');
     }
 }
