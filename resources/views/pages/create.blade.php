@@ -31,16 +31,17 @@
             <div id="previewContainer" class="flex flex-wrap mb-4">
                 <!-- Image preview will be appended here -->
             </div>
-            <button type="submit"
+            <button type="submit" id="submitbtn" disabled
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
         </form>
-        <a href="{{route('product.test')}}">test copy</a>
+        <a href="{{ route('product.test') }}">test copy</a>
     </div>
     <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
     <script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
     <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
     <script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
     <script>
+        let submitbtn = document.getElementById('submitbtn');
         FilePond.registerPlugin(FilePondPluginImagePreview);
         // Register the plugin
         FilePond.registerPlugin(FilePondPluginFileValidateType);
@@ -50,13 +51,19 @@
 
         // Create a FilePond instance
         const pond = FilePond.create(inputElement, {
-            acceptedFileTypes: ['image/png', 'image/jpeg','image/jpg'],
+            acceptedFileTypes: ['image/png', 'image/jpeg', 'image/jpg'],
             allowImagePreview: true,
-            maxFileSize : '2MB',
+            maxFileSize: '2MB',
             allowMultiple: true,
         });
 
         FilePond.setOptions({
+            required: true,
+            onprocessfile: (error, file) => {
+                if (!error) {
+                    submitbtn.removeAttribute("disabled")
+                }
+            },
             server: {
                 process: {
                     url: '{{ route('upload.temporary') }}',
