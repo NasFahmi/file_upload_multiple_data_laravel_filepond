@@ -33,12 +33,13 @@
             <div id="previewContainer" class="flex flex-wrap mb-4">
                 <!-- Image preview will be appended here -->
             </div>
-            <button type="submit" id="submitbtn" disabled
+            <button type="submit" id="submitbtn"
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
         </form>
         <a href="{{ route('product.test') }}">test copy</a>
         {{-- <p>{{ Storage::disk('public')->url($images) }}</p> --}}
         <p>{{ $data }}</p>
+        {{-- <p>{{$images}}</p> --}}
 
         {{-- <p>{{ $images }}</p> --}}
     </div>
@@ -47,6 +48,8 @@
     <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
     <script src="https://unpkg.com/filepond@^4/dist/filepond.js"></script>
     <script>
+        let images = @json($images);
+        console.log(images);
         let submitbtn = document.getElementById('submitbtn');
         FilePond.registerPlugin(FilePondPluginImagePreview);
         FilePond.registerPlugin(FilePondPluginFileValidateType);
@@ -71,17 +74,19 @@
             //         },
             //     }
             // ],
-            load: (source, load, error, progress, abort, headers) => {
-                const myRequest = new Request(source);
-                console.log(myRequest);
-                fetch(myRequest).then((res) => {
-                    return res.blob();
-                }).then(load);
-            },
+
         });
 
         FilePond.setOptions({
             required: true,
+            // onload: (source, load, error, progress, abort, headers) => {
+            //     console.log(source)
+            //     const myRequest = new Request(source);
+            //     fetch(myRequest).then((res) => {
+            //         return res.blob();
+            //     }).then(load);
+            //     console.log(myRequest);
+            // },
             onprocessfile: (error, file) => {
                 if (!error) {
                     submitbtn.removeAttribute("disabled");
@@ -99,6 +104,7 @@
                         .then((response) => response.json())
                         .then((data) => {
                             // Handle response (misalnya update status file)
+                            console.log(data)
                         });
                 }
             },
@@ -116,20 +122,32 @@
                         'X-CSRF-TOKEN': "{{ csrf_token() }}",
                     }
                 },
-            },
-            files: [{
-                    source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
-                    options: {
-                        type: 'local',
-                    },
+                load: (source, load, error, progress, abort, headers) => {
+                    var request = new Request(source);
+                    fetch(request).then(function(response) {
+
+                        response.blob().then(function(myBlob) {
+
+                            load(myBlob)
+                        });
+                    });
                 },
-                {
-                    source: 'http://127.0.0.1:8000/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
-                    options: {
-                        type: 'local',
-                    },
-                }
-            ],
+            },
+
+            // files: [{
+            //         source: '/storage/images/8SwKiRuRFjsYYMtBuJtR.png',
+            //         options: {
+            //             type: 'local',
+            //         },
+            //     },
+            //     {
+            //         source: '/storage/images/RTfaZNir7B6AHKJmKL8S.jpeg',
+            //         options: {
+            //             type: 'local',
+            //         },
+            //     }
+            // ],
+            files: images,
         });
     </script>
 @endsection

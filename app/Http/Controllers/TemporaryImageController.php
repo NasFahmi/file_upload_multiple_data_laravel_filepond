@@ -60,4 +60,7 @@ class TemporaryImageController extends Controller
         // If no temporary image found with the given folder, return 404
         return response()->json(['message' => 'Temporary image not found.'], 404);
     }
+    public function loadTemporary(){
+        
+    }
 }

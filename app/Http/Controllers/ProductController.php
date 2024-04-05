@@ -97,7 +97,7 @@ class ProductController extends Controller
                     // dd($destinationPath);
                     Storage::copy($sourcesPath, $destinationPath);
                     Image::create([
-                        'path' => 'storage/images/' . $fileNameProductImage,
+                        'path' => '/storage/images/' . $fileNameProductImage,
                         'product_id' => $productId,
                     ]);
                     $imageTemp->delete();
@@ -137,25 +137,48 @@ class ProductController extends Controller
                 ]
             ];
         })->toArray();
+        // dd($images);
 
         // dd($images);
         // Mengirimkan data produk ke view untuk diedit
-        return view('pages.edit', compact('data','images'));
+        return view('pages.edit', compact('data', 'images'));
     }
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Product $product)
+    //! use case jika tidak ada perbuhan data image
+    //! jika ada penambahan image
+    //! jika ada pergantian image
+    //! jika ada penghapusan image 
     {
-        dd($request->all());
-        $validatedData = $request->validate([
+        // dd($request->all());
+        $validator = Validator::make($request->all(), [
             'name' => 'required',
             'slug' => 'required|unique:products',
             'price' => 'required|numeric',
             'description' => 'required',
-            'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048' // Max 2MB per image
+            // 'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048' // Max 2MB per image
         ]);
+        
+        $dataAllImage = $request->photos; // Mendapatkan array dari request
+
+        $newPhotos = array_filter($dataAllImage, function ($item) {
+            return preg_match('/^\[".*"\]$/', $item);
+        });
+        
+        // Filter item yang tidak diapit oleh tanda kurung siku
+        $oldPhotos = array_filter($dataAllImage, function ($item) {
+            return !preg_match('/^\[".*"\]$/', $item);
+        });
+        dd($newPhotos);
+        dd($oldPhotos);
+        $decodedImages = [];
+        foreach ($newPhotos as $image) {
+            $decodedImages[] = json_decode($image, true); // Mendekodekan string JSON menjadi array PHP dan menambahkannya ke dalam array $decodedImages
+        }
+        $dataNewPhotos = call_user_func_array('array_merge', $decodedImages);
     }
 
     /**

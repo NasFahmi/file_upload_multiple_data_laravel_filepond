@@ -17,5 +17,5 @@ Route::delete('/product/{id}', [ProductController::class, 'destroy'])->name('pro
 
 Route::post('/product/upload',[TemporaryImageController::class,'uploadTemporary'])->name('upload.temporary');
 Route::post('/product/revert',[TemporaryImageController::class,'deleteTemporary'])->name('delete.temporary');
-
+Route::post('/product/load-temporary',[TemporaryImageController::class,'loadTemporary'])->name('load.temporary');
 Route::get('/product/test', [ProductController::class, 'test'])->name('product.test');
