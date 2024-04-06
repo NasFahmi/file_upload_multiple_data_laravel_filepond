@@ -17,7 +17,7 @@ class TemporaryImageController extends Controller
             foreach ($images as $image) {
                 $filename = $image->getClientOriginalName();
                 $folder = uniqid('image-', true);
-                $image->storeAs('public/images/tmp/' . $folder, $filename);
+                $image->storeAs('/images/tmp/' . $folder, $filename);
                 TemporaryImage::create([
                     'folder' => $folder,
                     'file' => $filename,
@@ -41,7 +41,7 @@ class TemporaryImageController extends Controller
         if ($temporaryImage) {
             try {
                 // Delete files from storage
-                Storage::deleteDirectory('public/images/tmp/' . $temporaryImage->folder);
+                Storage::deleteDirectory('/images/tmp/' . $temporaryImage->folder);
 
                 // Delete record from the database
                 $temporaryImage->delete();

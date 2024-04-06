@@ -63,7 +63,7 @@ class ProductController extends Controller
                 foreach ($dataImages as $temporaryImage) {
                     $tempImage = TemporaryImage::where('folder', $temporaryImage)->first(); //get single data temp image
                     // Delete files from storage
-                    Storage::deleteDirectory('public/images/tmp/' . $tempImage->folder);
+                    Storage::deleteDirectory('/images/tmp/' . $tempImage->folder);
 
                     // Delete record from the database
                     $tempImage->delete();
@@ -234,8 +234,8 @@ class ProductController extends Controller
                 $fileNameProductImage =  Str::random(20) . '.' . $extensionTemp;
                 // dd($fileNameProductImage); //GdomcXRDdftRq30MjJPz.jpeg
                 // copy file image from storage\app\public\images\tmp\image-660a77aaf10368.27307606\WhatsApp Image 2024-03-18 at 9.29.38 PM.jpeg to storage\app\public\images\GdomcXRDdftRq30MjJPz.jpeg
-                $sourcesPath = 'public/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
-                $destinationPath = 'public/images/' . $fileNameProductImage;
+                $sourcesPath = '/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
+                $destinationPath = '/images/' . $fileNameProductImage;
                 // dd($sourcesPath);
                 // dd($destinationPath);
                 Storage::copy($sourcesPath, $destinationPath);
@@ -244,7 +244,7 @@ class ProductController extends Controller
                     'product_id' => $productId,
                 ]);
                 $imageTemp->delete();
-                Storage::deleteDirectory('public/images/tmp/' . $folderNameTemp);
+                Storage::deleteDirectory('/images/tmp/' . $folderNameTemp);
             }
         }
     }
