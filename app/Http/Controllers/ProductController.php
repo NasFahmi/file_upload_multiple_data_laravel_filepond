@@ -55,6 +55,7 @@ class ProductController extends Controller
         $dataImages = call_user_func_array('array_merge', $decodedImages);
         // dd($dataImages); //array berisi temp gambar yang diupload
         // Validate the form data
+
         DB::beginTransaction();
         try {
             if ($validator->fails()) {
@@ -81,29 +82,8 @@ class ProductController extends Controller
             $product->save();
             $productId = $product->id;
 
+            $this->uploadImage($dataImages, $productId);
             // Store the product images
-            if ($dataImages) {
-                foreach ($dataImages as $image) {
-                    $imageTemp = TemporaryImage::where('folder', $image)->first(); //get single data temp image
-                    $extensionTemp = pathinfo($imageTemp->file, PATHINFO_EXTENSION); // Mendapatkan ekstensi file
-                    $folderNameTemp = $imageTemp->folder;
-                    $fileNameTemp = $imageTemp->file;
-                    $fileNameProductImage =  Str::random(20) . '.' . $extensionTemp;
-                    // dd($fileNameProductImage); //GdomcXRDdftRq30MjJPz.jpeg
-                    // copy file image from storage\app\public\images\tmp\image-660a77aaf10368.27307606\WhatsApp Image 2024-03-18 at 9.29.38 PM.jpeg to storage\app\public\images\GdomcXRDdftRq30MjJPz.jpeg
-                    $sourcesPath = 'public/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
-                    $destinationPath = 'public/images/' . $fileNameProductImage;
-                    // dd($sourcesPath);
-                    // dd($destinationPath);
-                    Storage::copy($sourcesPath, $destinationPath);
-                    Image::create([
-                        'path' => '/storage/images/' . $fileNameProductImage,
-                        'product_id' => $productId,
-                    ]);
-                    $imageTemp->delete();
-                    Storage::deleteDirectory('public/images/tmp/' . $folderNameTemp);
-                }
-            }
             DB::commit();
             return redirect()->route('product.index')->with('success', 'Product created successfully.');
         } catch (\Throwable $th) {
@@ -147,7 +127,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $product)
+    public function update(Request $request, $id)
     //! use case jika tidak ada perbuhan data image
     //! jika ada penambahan image
     //! jika ada pergantian image
@@ -160,7 +140,6 @@ class ProductController extends Controller
             'slug' => 'required',
             'price' => 'required|numeric',
             'description' => 'required',
-            // 'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048' // Max 2MB per image
         ]);
 
         // Jika validasi gagal, kembalikan respon dengan pesan kesalahan
@@ -179,20 +158,20 @@ class ProductController extends Controller
         $oldPhotos = array_filter($dataAllImage, function ($item) {
             return !preg_match('/^\[".*"\]$/', $item);
         });
-        // dd($newPhotos); //[]
-        if (!empty($newPhotos)) {
-            // dd($oldPhotos);
-            $decodedImages = [];
+        // dd($newPhotos);
+        $decodedImages = [];
+        $newdataImages = [];
+        if (isset($newPhotos)) {
             foreach ($newPhotos as $image) {
                 $decodedImages[] = json_decode($image, true); // Mendekodekan string JSON menjadi array PHP dan menambahkannya ke dalam array $decodedImages
             }
-            $dataNewPhotos = call_user_func_array('array_merge', $decodedImages);
-            // dd($dataNewPhotos);
+            $newdataImages = call_user_func_array('array_merge', $decodedImages);
         }
+        // dd($newdataImages);
         DB::beginTransaction();
         try {
             // $product = '1' -> id product 
-            $productData = Product::findOrFail((int)$product)
+            Product::findOrFail((int)$id)
                 ->update([
                     'name' => $request->name,
                     'slug' => $request->slug,
@@ -201,32 +180,13 @@ class ProductController extends Controller
                 ]);
             // dd('test');
             //! jika ada penambahan image(gambar yang baru hanya tersimpan di temp)
-            if (isset($dataNewPhotos)) {
-                // dd($dataNewPhotos);
-                foreach ($dataNewPhotos as $image) {
-                    $imageTemp = TemporaryImage::where('folder', $image)->first(); //get single data temp image
-                    $extensionTemp = pathinfo($imageTemp->file, PATHINFO_EXTENSION); // Mendapatkan ekstensi file
-                    $folderNameTemp = $imageTemp->folder;
-                    $fileNameTemp = $imageTemp->file;
-                    $fileNameProductImage =  Str::random(20) . '.' . $extensionTemp;
-                    // dd($fileNameProductImage);
-                    $sourcesPath = 'public/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
-                    $destinationPath = 'public/images/' . $fileNameProductImage;
-                    Storage::copy($sourcesPath, $destinationPath);
-                    Image::create([
-                        'path' => '/storage/images/' . $fileNameProductImage,
-                        'product_id' => (int)$product,
-                    ]);
-                    $imageTemp->delete();
-                    Storage::deleteDirectory('public/images/tmp/' . $folderNameTemp);
-                }
-            }
+            $this->uploadImage($newdataImages, $id);
             // dd('test');
             //! jika ada pergantian image(terdapat gambar lama yang dihapus, dan gambar baru yang disubmit)
             //! ini sama dengan menghapus iamge lama dari tabel Image
             if (isset($oldPhotos)) {
                 // dd($oldPhotos);//! data dari form edit
-                $allOldPhotos = Image::where('product_id', (int)$product)->pluck('path')->toArray();
+                $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
                 // dd($allOldPhotos);
                 $photosToDelete = array_diff($allOldPhotos, $oldPhotos); //array
                 // dd($photosToDelete);
@@ -238,13 +198,13 @@ class ProductController extends Controller
                 }
                 // dd('end foreach');
             }
+            DB::commit();
             return redirect()->route('product.index')->with('success', 'Product Edited successfully.');
             // dd($productData);
-            DB::commit();
         } catch (\Throwable $th) {
             // dd($th);
             throw $th;
-            return redirect()->back()->with('error', 'Failed to create product: ' . $th->getMessage());
+            // return redirect()->back()->with('error', 'Failed to create product: ' . $th->getMessage());
             DB::rollBack();
         }
     }
@@ -258,9 +218,34 @@ class ProductController extends Controller
     }
     public function test()
     {
-        // Storage::copy('public/test.txt', 'public/images/bukantest.txt');
+        Storage::copy('public/images/tmp/image-66115093f11340.28351473\3fec67cc1c1b990c0643d7b231344aaf.jpg', 'public/images/testing.jpg');
         // dd('succes');
-        Storage::delete('public/images/O60fAYsOELhPQMMBvuc9.jpg');//works
+        // Storage::delete('public/images/O60fAYsOELhPQMMBvuc9.jpg');//works
         dd('success');
+    }
+    public function uploadImage($dataImage, $productId)
+    {
+        if ($dataImage) {
+            foreach ($dataImage as $image) {
+                $imageTemp = TemporaryImage::where('folder', $image)->first(); //get single data temp image
+                $extensionTemp = pathinfo($imageTemp->file, PATHINFO_EXTENSION); // Mendapatkan ekstensi file
+                $folderNameTemp = $imageTemp->folder;
+                $fileNameTemp = $imageTemp->file;
+                $fileNameProductImage =  Str::random(20) . '.' . $extensionTemp;
+                // dd($fileNameProductImage); //GdomcXRDdftRq30MjJPz.jpeg
+                // copy file image from storage\app\public\images\tmp\image-660a77aaf10368.27307606\WhatsApp Image 2024-03-18 at 9.29.38 PM.jpeg to storage\app\public\images\GdomcXRDdftRq30MjJPz.jpeg
+                $sourcesPath = 'public/images/tmp/' . $folderNameTemp . '/' . $fileNameTemp;
+                $destinationPath = 'public/images/' . $fileNameProductImage;
+                // dd($sourcesPath);
+                // dd($destinationPath);
+                Storage::copy($sourcesPath, $destinationPath);
+                Image::create([
+                    'path' => '/storage/images/' . $fileNameProductImage,
+                    'product_id' => $productId,
+                ]);
+                $imageTemp->delete();
+                Storage::deleteDirectory('public/images/tmp/' . $folderNameTemp);
+            }
+        }
     }
 }
