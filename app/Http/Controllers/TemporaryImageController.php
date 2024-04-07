@@ -76,11 +76,11 @@ class TemporaryImageController extends Controller
                 $fileNameProductImage =  Str::random(20) . '.' . $extensionTemp;
 
                 // Store the image in the public/images directory
-                $image->move(public_path('images'), $fileNameProductImage);
+                $image->move(public_path('storage/images'), $fileNameProductImage);
 
                 // Store the image path in the database
                 Image::create([
-                    'path' => '/images/' . $fileNameProductImage,
+                    'path' => '/storage/images/' . $fileNameProductImage,
                     'product_id' => $id,
                 ]);
 
@@ -92,18 +92,18 @@ class TemporaryImageController extends Controller
 
         return '';
     }
-    public function deleteImageDirectlyToDB(Request $request, $id){
-        $img=Image::find($id);
+    // public function deleteImageDirectlyToDB(Request $request, $id){
+    //     $img=Image::find($id);
         
-        // Check if file exists in the storage and then delete it from there.
-        if (Storage::exists('/images'.$img->path)) {
-            Storage::delete('/images'.$img->path);
-        }
+    //     // Check if file exists in the storage and then delete it from there.
+    //     if (Storage::exists('/images'.$img->path)) {
+    //         Storage::delete('/images'.$img->path);
+    //     }
 
-        // Delete the record associated with this image from the images table.
-        $img->delete();
+    //     // Delete the record associated with this image from the images table.
+    //     $img->delete();
 
-        return response()->json(['success'=>true]);
+    //     return response()->json(['success'=>true]);
 
-    }
+    // }
 }

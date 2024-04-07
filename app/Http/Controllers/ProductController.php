@@ -134,11 +134,11 @@ class ProductController extends Controller
     //! jika ada penghapusan image 
     {
 
-      
+
         try {
             DB::beginTransaction();
             // Validasi data
-            // dd($request->name);
+            // dd($request->all());
             $validator = Validator::make($request->all(), [
                 'name' => 'required',
                 'slug' => 'required',
@@ -154,23 +154,31 @@ class ProductController extends Controller
 
             // Mendapatkan semua data gambar dari request
             $dataAllImage = $request->photos;
-
+            
             // Membagi gambar baru dan gambar lama berdasarkan format JSON
             $newPhotos = array_filter($dataAllImage, function ($item) {
                 return preg_match('/^\[".*"\]$/', $item);
-            });
+            }); //! new photos was upload direcly into database
             $oldPhotos = array_filter($dataAllImage, function ($item) {
                 return !preg_match('/^\[".*"\]$/', $item);
-            });
+            }); //!old photos
             // dd($newPhotos);
             $decodedImages = [];
             $newdataImages = [];
             if (isset($newPhotos)) {
+                $decodedImages = [];
                 foreach ($newPhotos as $image) {
-                    $decodedImages[] = json_decode($image, true); // Mendekodekan string JSON menjadi array PHP dan menambahkannya ke dalam array $decodedImages
+                    $decodedImages[] = json_decode($image, true);
                 }
                 $newdataImages = call_user_func_array('array_merge', $decodedImages);
+
+                // Ubah setiap nama file menjadi path yang diinginkan
+                $newdataImages = array_map(function ($filename) {
+                    return '/storage/images/' . ltrim($filename, '/');
+                }, $newdataImages);
             }
+            $combinedImage = array_merge($newdataImages, $oldPhotos);
+            // dd($newdataImages, $dataAllImage, $combinedImage);
             // $product = '1' -> id product 
             Product::findOrFail((int)$id)
                 ->update([
@@ -179,17 +187,12 @@ class ProductController extends Controller
                     'price' => $request->price,
                     'description' => $request->description,
                 ]);
-            // dd('test');
-            //! jika ada penambahan image(gambar yang baru hanya tersimpan di temp)
-            // $this->uploadImage($newdataImages, $id);
-            // dd('test');
-            //! jika ada pergantian image(terdapat gambar lama yang dihapus, dan gambar baru yang disubmit)
-            //! ini sama dengan menghapus iamge lama dari tabel Image
-            if (isset($oldPhotos)) {
-                // dd($oldPhotos);//! data dari form edit
+
+            if (isset($combinedImage)) {
                 $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
+                // dd($combinedImage,$allOldPhotos);//! data dari form edit
                 // dd($allOldPhotos);
-                $photosToDelete = array_diff($allOldPhotos, $oldPhotos); //array
+                $photosToDelete = array_diff($combinedImage, $allOldPhotos); //array
                 // dd($photosToDelete);
                 if (!empty($photosToDelete)) {
                     foreach ($photosToDelete as $photo) {
