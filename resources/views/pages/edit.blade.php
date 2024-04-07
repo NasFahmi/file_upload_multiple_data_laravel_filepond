@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold mb-4">Edit Product</h1>
         <form method="POST" action="{{ route('product.update', $data->id) }}" enctype="multipart/form-data">
             @csrf
-            @method('PATCH')
+            {{-- @method('PUT') --}}
             <div class="mb-4">
                 <label for="name" class="block mb-1">Name</label>
                 <input type="text" class="border border-gray-300 px-4 py-2 w-full" id="name" name="name"
@@ -35,6 +35,7 @@
             </div>
             <button type="submit" id="submitbtn"
                 class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
+                
         </form>
         <a href="{{ route('product.test') }}">test copy</a>
         {{-- <p>{{ Storage::disk('public')->url($images) }}</p> --}}
@@ -94,23 +95,23 @@
                     const formData = new FormData();
                     formData.append('file', file.file);
                     // Implementasikan upload ke server Anda
-                    fetch('{{ route('product.update', $data->id) }}', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                            },
-                            body: formData,
-                        })
-                        .then((response) => response.json())
-                        .then((data) => {
-                            // Handle response (misalnya update status file)
-                            console.log(data)
-                        });
+                    // fetch('{{ route('product.update', $data->id) }}', {
+                    //         method: 'PUT',
+                    //         headers: {
+                    //             'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    //         },
+                    //         body: formData,
+                    //     })
+                    //     .then((response) => response.json())
+                    //     .then((data) => {
+                    //         // Handle response (misalnya update status file)
+                    //         console.log(data)
+                    //     });
                 }
             },
             server: {
                 process: {
-                    url: '{{ route('upload.temporary') }}',
+                    url: '{{ route('update.toDB',$data->id) }}',
                     headers: {
                         'X-CSRF-TOKEN': "{{ csrf_token() }}",
                     }
@@ -123,6 +124,10 @@
                     }
                 },
                 load: (source, load, error, progress, abort, headers) => {
+                    console.log(error)
+                    console.log(abort)
+                    console.log(headers)
+                    console.log(source)
                     var request = new Request(source);
                     fetch(request).then(function(response) {
 
