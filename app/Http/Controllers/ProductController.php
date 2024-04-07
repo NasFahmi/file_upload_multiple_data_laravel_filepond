@@ -44,7 +44,7 @@ class ProductController extends Controller
             'slug' => 'required|unique:products',
             'price' => 'required|numeric',
             'description' => 'required',
-            // 'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048' // Max 2MB per image
+          
         ]);
 
         $dataAllImage = $request->photos; // Mendapatkan array dari request
@@ -53,8 +53,7 @@ class ProductController extends Controller
             $decodedImages[] = json_decode($image, true); // Mendekodekan string JSON menjadi array PHP dan menambahkannya ke dalam array $decodedImages
         }
         $dataImages = call_user_func_array('array_merge', $decodedImages);
-        // dd($dataImages); //array berisi temp gambar yang diupload
-        // Validate the form data
+       
 
         DB::beginTransaction();
         try {
@@ -117,10 +116,7 @@ class ProductController extends Controller
                 ]
             ];
         })->toArray();
-        // dd($images);
-
-        // dd($images);
-        // Mengirimkan data produk ke view untuk diedit
+       
         return view('pages.edit', compact('data', 'images'));
     }
 
@@ -178,8 +174,7 @@ class ProductController extends Controller
                 }, $newdataImages);
             }
             $combinedImage = array_merge($newdataImages, $oldPhotos);
-            // dd($newdataImages, $dataAllImage, $combinedImage);
-            // $product = '1' -> id product 
+        
             Product::findOrFail((int)$id)
                 ->update([
                     'name' => $request->name,
@@ -190,10 +185,9 @@ class ProductController extends Controller
 
             if (isset($combinedImage)) {
                 $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
-                // dd($combinedImage,$allOldPhotos);//! data dari form edit
-                // dd($allOldPhotos);
+               
                 $photosToDelete = array_diff($allOldPhotos, $combinedImage); //array
-                // dd($photosToDelete);
+
                 if (!empty($photosToDelete)) {
                     foreach ($photosToDelete as $photo) {
                         Image::where('path', $photo)->delete();
@@ -209,7 +203,7 @@ class ProductController extends Controller
         } catch (\Throwable $th) {
             // dd($th);
             throw $th;
-            // return redirect()->back()->with('error', 'Failed to create product: ' . $th->getMessage());
+            return redirect()->back()->with('error', 'Failed to create product: ' . $th->getMessage());
             DB::rollBack();
         }
     }
@@ -243,7 +237,7 @@ class ProductController extends Controller
             // dd($sourcesPath);
             // dd($destinationPath);
             Storage::copy($sourcesPath, $destinationPath);
-            $isertimagedb = Image::updateOrInsert([ //! hanya bekerja di store, namun tidak bekerja di update
+            Image::updateOrInsert([ //! hanya bekerja di store, namun tidak bekerja di update
                 'path' => '/storage/images/' . $fileNameProductImage,
                 'product_id' => $productId,
             ]);
