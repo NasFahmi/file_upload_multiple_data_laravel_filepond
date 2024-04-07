@@ -202,15 +202,7 @@ class ProductController extends Controller
                 }
                 // dd('end foreach');
             }
-            // if (isset($combinedImage)) {
-            //     $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
-            //     // dd($combinedImage,$allOldPhotos);//! data dari form edit
-            //     // dd($allOldPhotos);
-            //     $photosToDelete = array_diff($combinedImage, $dataAllImage); //array
-            //     // dd($photosToDelete);
-                
-            //     // dd('end foreach');
-            // }
+
             DB::commit();
             return redirect()->back()->with('success', 'Product Edited successfully.');
             // dd($productData);

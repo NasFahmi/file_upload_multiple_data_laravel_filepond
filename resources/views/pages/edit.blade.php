@@ -116,13 +116,7 @@
                         'X-CSRF-TOKEN': "{{ csrf_token() }}",
                     }
                 },
-                revert: {
-                    url: '{{ route('delete.toDB',$data->id) }}',
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                    }
-                },
+                
                 load: (source, load, error, progress, abort, headers) => {
                     console.log(error)
                     console.log(abort)
