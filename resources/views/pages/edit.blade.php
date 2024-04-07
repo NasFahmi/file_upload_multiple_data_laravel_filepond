@@ -117,7 +117,7 @@
                     }
                 },
                 revert: {
-                    url: '{{ route('delete.temporary') }}',
+                    url: '{{ route('delete.toDB',$data->id) }}',
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': "{{ csrf_token() }}",

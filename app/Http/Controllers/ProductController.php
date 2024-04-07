@@ -108,7 +108,7 @@ class ProductController extends Controller
     public function edit(Request $product)
     {
         // Mengambil data produk yang akan diedit
-        $data = Product::findOrFail($product->id);
+        $data = Product::with('images')->findOrFail($product->id);
         $images = Image::where('product_id', $product->id)->get()->map(function ($image) {
             return [
                 'source' => $image->path,
@@ -154,7 +154,7 @@ class ProductController extends Controller
 
             // Mendapatkan semua data gambar dari request
             $dataAllImage = $request->photos;
-            
+            // dd($dataAllImage);
             // Membagi gambar baru dan gambar lama berdasarkan format JSON
             $newPhotos = array_filter($dataAllImage, function ($item) {
                 return preg_match('/^\[".*"\]$/', $item);
@@ -192,7 +192,7 @@ class ProductController extends Controller
                 $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
                 // dd($combinedImage,$allOldPhotos);//! data dari form edit
                 // dd($allOldPhotos);
-                $photosToDelete = array_diff($combinedImage, $allOldPhotos); //array
+                $photosToDelete = array_diff($allOldPhotos, $combinedImage); //array
                 // dd($photosToDelete);
                 if (!empty($photosToDelete)) {
                     foreach ($photosToDelete as $photo) {
@@ -202,6 +202,15 @@ class ProductController extends Controller
                 }
                 // dd('end foreach');
             }
+            // if (isset($combinedImage)) {
+            //     $allOldPhotos = Image::where('product_id', (int)$id)->pluck('path')->toArray();
+            //     // dd($combinedImage,$allOldPhotos);//! data dari form edit
+            //     // dd($allOldPhotos);
+            //     $photosToDelete = array_diff($combinedImage, $dataAllImage); //array
+            //     // dd($photosToDelete);
+                
+            //     // dd('end foreach');
+            // }
             DB::commit();
             return redirect()->back()->with('success', 'Product Edited successfully.');
             // dd($productData);

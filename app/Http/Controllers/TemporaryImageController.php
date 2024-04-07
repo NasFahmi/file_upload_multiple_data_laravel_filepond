@@ -92,18 +92,19 @@ class TemporaryImageController extends Controller
 
         return '';
     }
-    // public function deleteImageDirectlyToDB(Request $request, $id){
-    //     $img=Image::find($id);
+    public function deleteImageDirectlyToDB($id){
+        $img=Image::where('product_id',$id);
+        dd($img);
         
-    //     // Check if file exists in the storage and then delete it from there.
-    //     if (Storage::exists('/images'.$img->path)) {
-    //         Storage::delete('/images'.$img->path);
-    //     }
+        // Check if file exists in the storage and then delete it from there.
+        if (Storage::exists('/images'.$img->path)) {
+            Storage::delete('/images'.$img->path);
+        }
 
-    //     // Delete the record associated with this image from the images table.
-    //     $img->delete();
+        // Delete the record associated with this image from the images table.
+        $img->delete();
 
-    //     return response()->json(['success'=>true]);
+        return response()->json(['success'=>true]);
 
-    // }
+    }
 }
