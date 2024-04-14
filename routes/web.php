@@ -19,9 +19,7 @@ Route::post('/product/{id}/update', [ProductController::class, 'update'])->name(
 
 Route::post('/product/upload',[TemporaryImageController::class,'uploadTemporary'])->name('upload.temporary');
 Route::post('/product/revert',[TemporaryImageController::class,'deleteTemporary'])->name('delete.temporary');
-Route::post('/product/load-temporary',[TemporaryImageController::class,'loadTemporary'])->name('load.temporary');
 
 Route::post('/product/update/{id}',[TemporaryImageController::class,'uploadImageDirectlyToDB'])->name('update.toDB');
-Route::post('/product/revert/{id}',[TemporaryImageController::class,'deleteImageDirectlyToDB'])->name('delete.toDB');
 
 Route::get('/product/test', [ProductController::class, 'test'])->name('product.test');
